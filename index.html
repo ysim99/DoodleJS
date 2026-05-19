@@ -473,14 +473,13 @@
   <!-- Template -->
   <div class="section">
     <div class="section-label">Prompt template</div>
-    <textarea id="template" rows="6">You are an accessibility expert. Analyze this image and write a concise, descriptive alt text.
-
+    <textarea id="template" rows="6">
 Guidelines:
 - Be specific and descriptive about the content
 - Keep it under 125 characters when possible
 - Focus on the most important visual elements
 - Do not start with "Image of" or "Picture of"
-- Return ONLY the alt text, nothing else</textarea>
+- Format should be {Title} - {Image Description}</textarea>
     <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
       <label class="upload-label" for="templateFile">
         <i class="ti ti-file-upload"></i>
