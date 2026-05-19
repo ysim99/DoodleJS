@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alt Text Generator</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css" />
+  <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f3;
+      --bg-tertiary: #eeeeeb;
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b68;
+      --text-tertiary: #9c9c98;
+      --border-light: rgba(0,0,0,0.1);
+      --border-mid: rgba(0,0,0,0.18);
+      --accent: #1D9E75;
+      --accent-bg: #e1f5ee;
+      --accent-text: #085041;
+      --danger: #E24B4A;
+      --danger-bg: #fcebeb;
+      --info: #378ADD;
+      --info-bg: #e6f1fb;
+      --info-text: #0C447C;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1c1c1a;
+        --bg-secondary: #242422;
+        --bg-tertiary: #2c2c2a;
+        --text-primary: #e8e8e4;
+        --text-secondary: #9c9c98;
+        --text-tertiary: #6b6b68;
+        --border-light: rgba(255,255,255,0.08);
+        --border-mid: rgba(255,255,255,0.15);
+        --accent: #1D9E75;
+        --accent-bg: #04342c;
+        --accent-text: #9FE1CB;
+        --danger: #E24B4A;
+        --danger-bg: #501313;
+        --info: #378ADD;
+        --info-bg: #042C53;
+        --info-text: #B5D4F4;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 0.5px solid var(--border-light);
+    }
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.4px;
+    }
+    .title i { font-size: 20px; color: var(--accent); }
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 5px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--accent-bg);
+      color: var(--accent-text);
+      font-weight: 500;
+      margin-left: 4px;
+    }
+
+    /* Sections */
+    .section { margin-bottom: 1.5rem; }
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    /* Grid */
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 520px) { .row-2 { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 11px; color: var(--text-secondary); }
+
+    /* Inputs */
+    input[type="text"],
+    input[type="password"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 7px 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(29,158,117,0.12);
+    }
+    select { cursor: pointer; }
+    textarea { resize: vertical; line-height: 1.6; }
+
+    /* Buttons */
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, transform 0.1s;
+    }
+    button:hover { background: var(--bg-tertiary); border-color: var(--border-mid); }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      padding: 8px 20px;
+      font-size: 13px;
+    }
+    .btn-primary:hover { background: #189e72; border-color: #189e72; }
+    .btn-primary:disabled { background: var(--accent); border-color: var(--accent); }
+
+    /* Upload button (label styled as button) */
+    .upload-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .upload-label:hover { background: var(--bg-tertiary); }
+    .upload-hint { font-size: 11px; color: var(--text-tertiary); }
+
+    /* URL input row */
+    .url-input-row { display: flex; gap: 8px; }
+    .url-input-row input { flex: 1; }
+
+    /* Direct images list */
+    .img-list {
+      margin-top: 10px;
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .img-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-bottom: 0.5px solid var(--border-light);
+      font-size: 11px;
+    }
+    .img-item:last-child { border-bottom: none; }
+    .img-num {
+      min-width: 20px;
+      color: var(--text-tertiary);
+      text-align: right;
+      user-select: none;
+    }
+    .img-title {
+      min-width: 120px;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .img-url {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-secondary);
+    }
+    .img-remove {
+      padding: 0;
+      border: none;
+      background: none;
+      font-size: 16px;
+      line-height: 1;
+      color: var(--text-tertiary);
+      min-width: auto;
+    }
+    .img-remove:hover { color: var(--danger); background: none; }
+
+    /* URL list (page crawl) */
+    .url-list {
+      margin-top: 10px;
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .url-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-bottom: 0.5px solid var(--border-light);
+      font-size: 11px;
+    }
+    .url-item:last-child { border-bottom: none; }
+    .url-num {
+      min-width: 20px;
+      color: var(--text-tertiary);
+      text-align: right;
+      user-select: none;
+    }
+    .url-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-secondary);
+    }
+    .url-remove {
+      padding: 0;
+      border: none;
+      background: none;
+      font-size: 16px;
+      line-height: 1;
+      color: var(--text-tertiary);
+      min-width: auto;
+    }
+    .url-remove:hover { color: var(--danger); background: none; }
+
+    /* Info banner */
+    .info-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--info-bg);
+      border: 0.5px solid var(--info);
+      border-radius: var(--radius-md);
+      font-size: 11px;
+      color: var(--info-text);
+      margin-top: 10px;
+    }
+    .info-banner i { margin-top: 1px; flex-shrink: 0; }
+
+    /* Separator */
+    .separator { height: 0.5px; background: var(--border-light); margin: 1.5rem 0; }
+
+    /* Actions bar */
+    .actions { display: flex; align-items: center; gap: 10px; }
+    .progress-wrap {
+      flex: 1;
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .status-text {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      min-height: 18px;
+    }
+    .spinning { display: inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Results */
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .results-count { font-size: 11px; color: var(--text-secondary); }
+
+    .table-wrap {
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    thead { position: sticky; top: 0; z-index: 2; }
+    th {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-tertiary);
+      padding: 8px 12px;
+      text-align: left;
+      background: var(--bg-secondary);
+      border-bottom: 0.5px solid var(--border-mid);
+      font-weight: 600;
+    }
+    th.col-title  { width: 22%; }
+    th.col-src    { width: 32%; }
+    th.col-alt    { width: 46%; }
+    td {
+      font-size: 11px;
+      padding: 8px 12px;
+      border-bottom: 0.5px solid var(--border-light);
+      color: var(--text-primary);
+      vertical-align: top;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--bg-secondary); }
+    tr.error-row td { color: var(--danger); }
+    .empty-state { text-align: center; color: var(--text-tertiary); padding: 2rem; }
+
+    /* Model note */
+    .model-note {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 6px;
+    }
+    .model-note a { color: var(--info); text-decoration: none; }
+    .model-note a:hover { text-decoration: underline; }
+
+    /* Mode tabs */
+    .mode-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .mode-tab {
+      padding: 5px 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .mode-tab.active {
+      background: var(--accent-bg);
+      border-color: var(--accent);
+      color: var(--accent-text);
+    }
+    .mode-tab:hover:not(.active) { background: var(--bg-tertiary); }
+
+    /* File input hidden */
+    input[type="file"] { display: none; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="title">
+      <i class="ti ti-eye"></i>
+      Alt Text Generator
+      <span class="badge"><i class="ti ti-sparkles"></i> AI-powered</span>
+    </div>
+    <div class="subtitle">Import CSV (Title + Image URL) or crawl page URLs → generate alt text via vision models</div>
+  </div>
+
+  <!-- Config -->
+  <div class="section">
+    <div class="section-label">Configuration</div>
+    <div class="row-2" style="margin-bottom: 8px;">
+      <div class="field">
+        <label>Gemini API key</label>
+        <input type="password" id="apiKey" placeholder="AIza..." autocomplete="off" />
+      </div>
+      <div class="field">
+        <label>Vision model</label>
+        <div style="display: flex; gap: 8px;">
+          <select id="model" style="flex: 1;">
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+            <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
+          </select>
+          <button type="button" onclick="loadGeminiModels()"><i class="ti ti-refresh"></i> Load</button>
+        </div>
+      </div>
+    </div>
+    <div class="model-note">
+      Create a key in <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>. Click Load to list models available to your key that support <code>generateContent</code>.
+    </div>
+  </div>
+
+  <!-- Template -->
+  <div class="section">
+    <div class="section-label">Prompt template</div>
+    <textarea id="template" rows="6">You are an accessibility expert. Analyze this image and write a concise, descriptive alt text.
+
+Guidelines:
+- Be specific and descriptive about the content
+- Keep it under 125 characters when possible
+- Focus on the most important visual elements
+- Do not start with "Image of" or "Picture of"
+- Return ONLY the alt text, nothing else</textarea>
+    <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+      <label class="upload-label" for="templateFile">
+        <i class="ti ti-file-upload"></i>
+        Upload template.txt
+      </label>
+      <input type="file" id="templateFile" accept=".txt" />
+      <span class="upload-hint">or edit the prompt directly above</span>
+    </div>
+  </div>
+
+  <!-- Input Mode Tabs -->
+  <div class="section">
+    <div class="section-label">Input source</div>
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tabCsv" onclick="switchMode('csv')">
+        <i class="ti ti-file-spreadsheet"></i> CSV Import (Title + Image URL)
+      </button>
+      <button class="mode-tab" id="tabCrawl" onclick="switchMode('crawl')">
+        <i class="ti ti-world-search"></i> Crawl Page URLs
+      </button>
+    </div>
+
+    <!-- ── MODE: CSV Direct Import ── -->
+    <div id="modeCsv">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <label class="upload-label" for="csvFile">
+          <i class="ti ti-file-spreadsheet"></i>
+          Import CSV
+        </label>
+        <input type="file" id="csvFile" accept=".csv,.txt" />
+        <span class="upload-hint">columns: <strong>Title</strong> | <strong>Image URL</strong> — header row auto-skipped</span>
+      </div>
+
+      <div class="info-banner">
+        <i class="ti ti-info-circle"></i>
+        <span>Accepts <strong>tab</strong> (TSV — exported from Excel or Google Sheets) or <strong>comma</strong> (CSV) delimiters. Pipe <code>|</code> is <em>not</em> used as a delimiter since product titles may contain it. First column = <strong>Title</strong>, second column = <strong>Image URL</strong>. Header row is auto-skipped.</span>
+      </div>
+
+      <div id="imgList" style="display: none;" class="img-list"></div>
+    </div>
+
+    <!-- ── MODE: Crawl Page URLs ── -->
+    <div id="modeCrawl" style="display: none;">
+      <div class="url-input-row">
+        <input type="text" id="urlInput" placeholder="https://example.com" />
+        <button onclick="addUrl()"><i class="ti ti-plus"></i> Add</button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+        <label class="upload-label" for="crawlCsvFile">
+          <i class="ti ti-file-spreadsheet"></i>
+          Import CSV (URLs only)
+        </label>
+        <input type="file" id="crawlCsvFile" accept=".csv,.txt" />
+        <span class="upload-hint">one URL per row — header row auto-skipped</span>
+      </div>
+      <div id="urlList" style="display: none;" class="url-list"></div>
+    </div>
+  </div>
+
+  <div class="separator"></div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn-primary" id="runBtn" onclick="processAll()">
+      <i class="ti ti-player-play"></i> Run
+    </button>
+    <button id="pauseBtn" onclick="togglePause()" style="display: none;">
+      <i class="ti ti-player-pause"></i> Pause
+    </button>
+    <div class="progress-wrap" id="progressWrap" style="display: none;">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <button id="exportBtn" onclick="exportCSV()" style="display: none;">
+      <i class="ti ti-download"></i> Export CSV
+    </button>
+    <button id="clearBtn" onclick="clearResults()" style="display: none;">
+      <i class="ti ti-trash"></i> Clear
+    </button>
+  </div>
+  <div class="status-text" id="statusText"></div>
+
+  <!-- Results -->
+  <div id="resultsSection" style="margin-top: 1.5rem; display: none;">
+    <div class="results-header">
+      <div class="section-label" style="margin-bottom: 0;">Results</div>
+      <div class="results-count" id="resultsCount"></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-title">Title</th>
+            <th class="col-src">Image Src</th>
+            <th class="col-alt">Image Alt Text</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody">
+          <tr><td colspan="3" class="empty-state">No results yet — run the tool above</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+
+
+<script>
+  // ─── State ───────────────────────────────────────────────────────────────
+  let mode = 'csv';          // 'csv' | 'crawl'
+  let directImages = [];     // [{ title, src }]  — from CSV import
+  let urls = [];             // page URLs for crawl mode
+  let results = [];
+  let running = false;
+  let paused  = false;
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+
+  function setStatus(msg, spin = false) {
+    $('statusText').innerHTML = spin
+      ? `<span class="spinning">⟳</span> ${msg}`
+      : msg;
+  }
+
+  function setProgress(pct) {
+    $('progressBar').style.width = Math.min(100, pct) + '%';
+  }
+
+  // ─── Mode Switch ──────────────────────────────────────────────────────────
+  function switchMode(m) {
+    mode = m;
+    $('tabCsv').classList.toggle('active', m === 'csv');
+    $('tabCrawl').classList.toggle('active', m === 'crawl');
+    $('modeCsv').style.display   = m === 'csv'   ? '' : 'none';
+    $('modeCrawl').style.display = m === 'crawl' ? '' : 'none';
+  }
+
+  // ─── CSV Parsing Utility ──────────────────────────────────────────────────
+  // Parses a single CSV/pipe-delimited line, respecting quoted fields.
+  function parseCsvRow(line, delimiter) {
+    const cols = [];
+    let cur = '';
+    let inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
+        else { inQuote = !inQuote; }
+      } else if (ch === delimiter && !inQuote) {
+        cols.push(cur.trim());
+        cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    cols.push(cur.trim());
+    return cols;
+  }
+
+  // Detect delimiter: tab first (TSV exports from Excel/Sheets), then comma.
+  // Pipe is intentionally excluded — product titles commonly contain '|' as a separator word.
+  function detectDelimiter(sample) {
+    return sample.includes('\t') ? '\t' : ',';
+  }
+
+  // Returns true if a row looks like a header (no URL in col-1).
+  function isHeaderRow(cols) {
+    const second = (cols[1] || '').trim();
+    return !second.match(/^https?:\/\//i);
+  }
+
+  // ─── Direct Image List Rendering ─────────────────────────────────────────
+  function renderImgList() {
+    const list = $('imgList');
+    if (directImages.length === 0) { list.style.display = 'none'; return; }
+    list.style.display = 'block';
+    list.innerHTML = directImages.map((img, i) => `
+      <div class="img-item">
+        <span class="img-num">${i + 1}</span>
+        <span class="img-title" title="${escapeHtml(img.title)}">${escapeHtml(img.title) || '<em style="color:var(--text-tertiary)">no title</em>'}</span>
+        <span class="img-url" title="${escapeHtml(img.src)}">${escapeHtml(img.src)}</span>
+        <button class="img-remove" onclick="removeImg(${i})" aria-label="Remove">×</button>
+      </div>
+    `).join('');
+  }
+
+  function removeImg(idx) {
+    directImages.splice(idx, 1);
+    renderImgList();
+  }
+
+  // ─── CSV Import (Title | Image URL) ──────────────────────────────────────
+  $('csvFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const text = ev.target.result;
+      const lines = text.split(/\r?\n/);
+      if (lines.length === 0) { setStatus('CSV file is empty'); return; }
+
+      const delimiter = detectDelimiter(lines.slice(0, 3).join('\n'));
+      let added = 0;
+      let skippedHeader = false;
+
+      lines.forEach((line, idx) => {
+        if (!line.trim()) return;
+        const cols = parseCsvRow(line, delimiter);
+        if (cols.length < 2) return;
+
+        const title = cols[0].trim();
+        const imgUrl = cols[1].trim();
+
+        // Skip header row (first row that doesn't have a URL in col-1)
+        if (!skippedHeader && idx === 0 && !imgUrl.match(/^https?:\/\//i)) {
+          skippedHeader = true;
+          return;
+        }
+
+        if (!imgUrl.match(/^https?:\/\//i)) return;  // skip rows with no valid URL
+
+        // Avoid exact duplicates
+        const exists = directImages.some(d => d.src === imgUrl && d.title === title);
+        if (!exists) {
+          directImages.push({ title, src: imgUrl });
+          added++;
+        }
+      });
+
+      setStatus(added > 0
+        ? `Imported ${added} image${added !== 1 ? 's' : ''} from CSV (delimiter: "${delimiter}")`
+        : 'No valid image rows found — check column order: Title | Image URL');
+      renderImgList();
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // ─── URL Management (Crawl mode) ─────────────────────────────────────────
+  function renderUrlList() {
+    const list = $('urlList');
+    if (urls.length === 0) { list.style.display = 'none'; return; }
+    list.style.display = 'block';
+    list.innerHTML = urls.map((u, i) => `
+      <div class="url-item">
+        <span class="url-num">${i + 1}</span>
+        <span class="url-text" title="${u}">${u}</span>
+        <button class="url-remove" onclick="removeUrl(${i})" aria-label="Remove URL">×</button>
+      </div>
+    `).join('');
+  }
+
+  function addUrl() {
+    const val = $('urlInput').value.trim();
+    if (!val.match(/^https?:\/\//i)) { setStatus('URL must start with http:// or https://'); return; }
+    if (urls.includes(val)) { setStatus('URL already in the list'); return; }
+    urls.push(val);
+    $('urlInput').value = '';
+    setStatus('');
+    renderUrlList();
+  }
+
+  function removeUrl(idx) {
+    urls.splice(idx, 1);
+    renderUrlList();
+  }
+
+  $('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addUrl(); });
+
+  // Crawl-mode CSV import (plain URL list)
+  $('crawlCsvFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const lines = ev.target.result.split(/\r?\n/);
+      let added = 0;
+      lines.forEach(line => {
+        const cleaned = line.trim().replace(/^["']|["']$/g, '');
+        if (cleaned.match(/^https?:\/\//i) && !urls.includes(cleaned)) {
+          urls.push(cleaned);
+          added++;
+        }
+      });
+      setStatus(added > 0
+        ? `Added ${added} URL${added > 1 ? 's' : ''} from CSV`
+        : 'No valid URLs found in CSV file');
+      renderUrlList();
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // ─── Template Upload ──────────────────────────────────────────────────────
+  $('templateFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { $('template').value = ev.target.result; setStatus('Template loaded from file'); };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // ─── Fetch Images from Page (Crawl mode) ─────────────────────────────────
+  async function fetchImages(pageUrl) {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(pageUrl)}`;
+    try {
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
+      const data = await res.json();
+      const html = data.contents || '';
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const imgs = Array.from(doc.querySelectorAll('img'));
+      return imgs.map(img => {
+        let src = img.getAttribute('src') || '';
+        if (!src || src.startsWith('data:')) return null;
+        if (!src.match(/^https?:\/\//i)) {
+          try { src = new URL(src, pageUrl).href; } catch { return null; }
+        }
+        return src;
+      }).filter(Boolean);
+    } catch (err) {
+      console.error('fetchImages error:', err);
+      return [];
+    }
+  }
+
+  // ─── Pause helpers ────────────────────────────────────────────────────────
+  function togglePause() {
+    paused = !paused;
+    const btn = $('pauseBtn');
+    if (paused) {
+      btn.innerHTML = '<i class="ti ti-player-play"></i> Resume';
+      setStatus('⏸ Paused — click Resume to continue');
+    } else {
+      btn.innerHTML = '<i class="ti ti-player-pause"></i> Pause';
+    }
+  }
+
+  // Waits in a polling loop while paused; resolves immediately when not.
+  function waitIfPaused() {
+    return new Promise(resolve => {
+      (function check() { paused ? setTimeout(check, 200) : resolve(); })();
+    });
+  }
+
+  // ─── Add Row to Results Table ─────────────────────────────────────────────
+  function addResultRow(title, src, alt, isError = false) {
+    const tbody = $('resultsBody');
+    const emptyRow = tbody.querySelector('[colspan]');
+    if (emptyRow) emptyRow.parentElement.remove();
+
+    const tr = document.createElement('tr');
+    if (isError) tr.classList.add('error-row');
+    tr.innerHTML = `
+      <td style="font-weight:500;">${escapeHtml(title || '—')}</td>
+      <td style="font-size:10px;color:var(--text-tertiary);word-break:break-all;">${escapeHtml(src)}</td>
+      <td>${isError ? '<i class="ti ti-alert-circle" style="margin-right:4px;"></i>' : ''}${escapeHtml(alt)}</td>
+    `;
+    tbody.appendChild(tr);
+    tbody.parentElement.scrollTop = tbody.parentElement.scrollHeight;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ─── Export CSV ───────────────────────────────────────────────────────────
+  function exportCSV() {
+    const BOM    = '\uFEFF';
+    const header = 'Title,Image Src,Image Alt Text\n';
+    const rows   = results.map(r =>
+      `"${(r.title || '').replace(/"/g, '""')}","${r.src.replace(/"/g, '""')}","${r.alt.replace(/"/g, '""')}"`
+    ).join('\n');
+
+    const blob = new Blob([BOM + header + rows], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `alt-text-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ─── Clear ────────────────────────────────────────────────────────────────
+  function clearResults() {
+    results = [];
+    $('resultsBody').innerHTML = '<tr><td colspan="3" class="empty-state">No results yet — run the tool above</td></tr>';
+    $('resultsSection').style.display = 'none';
+    $('exportBtn').style.display = 'none';
+    $('clearBtn').style.display = 'none';
+    $('pauseBtn').style.display = 'none';
+    $('progressWrap').style.display = 'none';
+    setProgress(0);
+    setStatus('');
+  }
+</script>
+
+<script src="gemini.js"></script>
+
+</body>
+</html>
