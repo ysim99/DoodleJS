@@ -1,6 +1,8 @@
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
-const MAX_GENERATION_ATTEMPTS = 3;
+const MAX_GENERATION_ATTEMPTS = 10;
+let workloadTimerId = null;
+let workload = null;
 
 async function processAll() {
   if (running) return;
@@ -51,6 +53,7 @@ async function processAll() {
 
   running = true;
   paused = false;
+  startWorkload(images.length);
   $('runBtn').disabled = true;
   $('pauseBtn').style.display = '';
   $('pauseBtn').innerHTML = '<i class="ti ti-player-pause"></i> Pause';
@@ -80,16 +83,19 @@ async function processAll() {
         addResultRow(image.title, image.src, alt);
       } catch (err) {
         skipped++;
-        console.warn('Gemini generation skipped:', image.src, err);
+        const msg = cleanErrorMessage(err);
+        results.push({ title: image.title, src: image.src, alt: `ERROR: ${msg}` });
+        addResultRow(image.title, image.src, msg, true);
       }
 
       const startPct = mode === 'crawl' ? 20 : 0;
       const rangePct = mode === 'crawl' ? 80 : 100;
       setProgress(startPct + ((i + 1) / images.length) * rangePct);
       $('resultsCount').textContent = `${results.length} row${results.length === 1 ? '' : 's'}`;
+      updateWorkload(i + 1, results.length - skipped, skipped);
     }
 
-    setStatus(`Done. Generated ${results.length} alt text result${results.length === 1 ? '' : 's'}${skipped ? `; skipped ${skipped} failed image${skipped === 1 ? '' : 's'}` : ''}.`);
+    setStatus(`Done. Generated ${results.length - skipped} alt text result${results.length - skipped === 1 ? '' : 's'}${skipped ? `; ${skipped} image${skipped === 1 ? '' : 's'} failed after ${MAX_GENERATION_ATTEMPTS} attempts` : ''}.`);
   } finally {
     running = false;
     paused = false;
@@ -97,6 +103,7 @@ async function processAll() {
     $('pauseBtn').style.display = 'none';
     $('exportBtn').style.display = results.length ? '' : 'none';
     $('clearBtn').style.display = results.length ? '' : 'none';
+    stopWorkload();
   }
 }
 
@@ -107,6 +114,10 @@ async function generateAltTextWithRetry(params) {
     try {
       if (attempt > 1) {
         setStatus(`Retrying ${attempt} of ${MAX_GENERATION_ATTEMPTS}...`, true);
+        if (workload) {
+          workload.currentAttempt = attempt;
+          renderWorkload();
+        }
       }
       return await generateGeminiAltText(params);
     } catch (err) {
@@ -118,6 +129,60 @@ async function generateAltTextWithRetry(params) {
   }
 
   throw lastError;
+}
+
+function startWorkload(total) {
+  stopWorkload();
+  workload = {
+    startedAt: Date.now(),
+    total,
+    processed: 0,
+    succeeded: 0,
+    failed: 0,
+    currentAttempt: 1
+  };
+  renderWorkload();
+  workloadTimerId = setInterval(renderWorkload, 1000);
+}
+
+function updateWorkload(processed, succeeded, failed) {
+  if (!workload) return;
+  workload.processed = processed;
+  workload.succeeded = succeeded;
+  workload.failed = failed;
+  workload.currentAttempt = 1;
+  renderWorkload();
+}
+
+function stopWorkload() {
+  if (workloadTimerId) {
+    clearInterval(workloadTimerId);
+    workloadTimerId = null;
+  }
+  if (workload) renderWorkload(true);
+}
+
+function renderWorkload(done = false) {
+  if (!workload || typeof setWorkload !== 'function') return;
+
+  const elapsedMs = Date.now() - workload.startedAt;
+  const averageMs = workload.processed > 0 ? elapsedMs / workload.processed : 0;
+  const remaining = Math.max(0, workload.total - workload.processed);
+  const etaMs = averageMs ? averageMs * remaining : 0;
+  const parts = [
+    `Elapsed ${formatDuration(elapsedMs)}`,
+    `${workload.processed}/${workload.total} processed`,
+    `${remaining} remaining`,
+    `OK ${workload.succeeded}`,
+    `Failed ${workload.failed}`
+  ];
+
+  if (!done) {
+    parts.push(`ETA ${etaMs ? formatDuration(etaMs) : '--:--'}`);
+    if (workload.currentAttempt > 1) parts.push(`retry ${workload.currentAttempt}/${MAX_GENERATION_ATTEMPTS}`);
+  }
+
+  setWorkload(parts.join(' | '));
 }
 
 async function generateGeminiAltText({ apiKey, model, template, title, src }) {
@@ -372,4 +437,17 @@ function getDisplayTitleFromUrl(pageUrl) {
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.round(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }

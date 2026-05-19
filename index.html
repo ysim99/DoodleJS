@@ -330,6 +330,12 @@
       margin-top: 8px;
       min-height: 18px;
     }
+    .workload-text {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 3px;
+      min-height: 18px;
+    }
     .spinning { display: inline-block; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -555,6 +561,7 @@ Guidelines:
     </button>
   </div>
   <div class="status-text" id="statusText"></div>
+  <div class="workload-text" id="workloadText"></div>
 
   <!-- Results -->
   <div id="resultsSection" style="margin-top: 1.5rem; display: none;">
@@ -602,6 +609,11 @@ Guidelines:
 
   function setProgress(pct) {
     $('progressBar').style.width = Math.min(100, pct) + '%';
+  }
+
+  function setWorkload(msg) {
+    const el = $('workloadText');
+    if (el) el.textContent = msg;
   }
 
   // ─── Mode Switch ──────────────────────────────────────────────────────────
@@ -878,6 +890,7 @@ Guidelines:
     $('progressWrap').style.display = 'none';
     setProgress(0);
     setStatus('');
+    setWorkload('');
   }
 </script>
 
