@@ -552,8 +552,11 @@ Guidelines:
     <div class="progress-wrap" id="progressWrap" style="display: none;">
       <div class="progress-bar" id="progressBar"></div>
     </div>
-    <button id="exportBtn" onclick="exportCSV()" style="display: none;">
+    <button id="exportBtn" onclick="exportCSV()">
       <i class="ti ti-download"></i> Export CSV
+    </button>
+    <button id="showCsvBtn" onclick="toggleResultsView()">
+      <i class="ti ti-table"></i> Show CSV
     </button>
     <button id="clearBtn" onclick="clearResults()" style="display: none;">
       <i class="ti ti-trash"></i> Clear
@@ -596,6 +599,8 @@ Guidelines:
   let results = [];
   let running = false;
   let paused  = false;
+  let resultsVisible = false;
+  const RESULTS_BACKUP_KEY = 'doodlejs.altTextResultsBackup.v1';
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
   const $ = id => document.getElementById(id);
@@ -613,6 +618,38 @@ Guidelines:
   function setWorkload(msg) {
     const el = $('workloadText');
     if (el) el.textContent = msg;
+  }
+
+  function updateResultsMeta() {
+    $('resultsCount').textContent = `${results.length} row${results.length === 1 ? '' : 's'}`;
+    $('clearBtn').style.display = results.length ? '' : 'none';
+  }
+
+  function saveResultsBackup(reason = 'manual') {
+    try {
+      localStorage.setItem(RESULTS_BACKUP_KEY, JSON.stringify({
+        version: 1,
+        reason,
+        savedAt: new Date().toISOString(),
+        results
+      }));
+    } catch (err) {
+      console.warn('Could not save results backup:', err);
+    }
+  }
+
+  function restoreResultsBackup() {
+    try {
+      const raw = localStorage.getItem(RESULTS_BACKUP_KEY);
+      if (!raw) return;
+      const backup = JSON.parse(raw);
+      if (!Array.isArray(backup.results) || backup.results.length === 0) return;
+      results = backup.results;
+      updateResultsMeta();
+      setStatus(`Restored ${results.length} backed up result${results.length === 1 ? '' : 's'} from localStorage`);
+    } catch (err) {
+      console.warn('Could not restore results backup:', err);
+    }
   }
 
   // ─── Mode Switch ──────────────────────────────────────────────────────────
@@ -834,21 +871,35 @@ Guidelines:
     });
   }
 
-  // ─── Add Row to Results Table ─────────────────────────────────────────────
-  function addResultRow(title, src, alt, isError = false) {
+  // ─── Results Table Rendering ──────────────────────────────────────────────
+  function renderResultsTable() {
     const tbody = $('resultsBody');
-    const emptyRow = tbody.querySelector('[colspan]');
-    if (emptyRow) emptyRow.parentElement.remove();
+    if (results.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No results yet — run the tool above</td></tr>';
+      updateResultsMeta();
+      return;
+    }
 
-    const tr = document.createElement('tr');
-    if (isError) tr.classList.add('error-row');
-    tr.innerHTML = `
-      <td style="font-weight:500;">${escapeHtml(title || '—')}</td>
-      <td style="font-size:10px;color:var(--text-tertiary);word-break:break-all;">${escapeHtml(src)}</td>
-      <td>${isError ? '<i class="ti ti-alert-circle" style="margin-right:4px;"></i>' : ''}${escapeHtml(alt)}</td>
-    `;
-    tbody.appendChild(tr);
-    tbody.parentElement.scrollTop = tbody.parentElement.scrollHeight;
+    tbody.innerHTML = results.map(r => {
+      const isError = String(r.alt || '').startsWith('ERROR:');
+      return `
+        <tr${isError ? ' class="error-row"' : ''}>
+          <td style="font-weight:500;">${escapeHtml(r.title || '—')}</td>
+          <td style="font-size:10px;color:var(--text-tertiary);word-break:break-all;">${escapeHtml(r.src)}</td>
+          <td>${isError ? '<i class="ti ti-alert-circle" style="margin-right:4px;"></i>' : ''}${escapeHtml(r.alt)}</td>
+        </tr>
+      `;
+    }).join('');
+    updateResultsMeta();
+  }
+
+  function toggleResultsView() {
+    resultsVisible = !resultsVisible;
+    $('resultsSection').style.display = resultsVisible ? '' : 'none';
+    $('showCsvBtn').innerHTML = resultsVisible
+      ? '<i class="ti ti-eye-off"></i> Hide CSV'
+      : '<i class="ti ti-table"></i> Show CSV';
+    if (resultsVisible) renderResultsTable();
   }
 
   function escapeHtml(str) {
@@ -881,16 +932,21 @@ Guidelines:
   // ─── Clear ────────────────────────────────────────────────────────────────
   function clearResults() {
     results = [];
+    localStorage.removeItem(RESULTS_BACKUP_KEY);
     $('resultsBody').innerHTML = '<tr><td colspan="3" class="empty-state">No results yet — run the tool above</td></tr>';
     $('resultsSection').style.display = 'none';
-    $('exportBtn').style.display = 'none';
     $('clearBtn').style.display = 'none';
+    $('showCsvBtn').innerHTML = '<i class="ti ti-table"></i> Show CSV';
     $('pauseBtn').style.display = 'none';
     $('progressWrap').style.display = 'none';
+    resultsVisible = false;
     setProgress(0);
     setStatus('');
     setWorkload('');
+    updateResultsMeta();
   }
+
+  restoreResultsBackup();
 </script>
 
 <script src="gemini.js"></script>

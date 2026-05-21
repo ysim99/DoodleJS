@@ -58,9 +58,12 @@ async function processAll() {
   $('pauseBtn').style.display = '';
   $('pauseBtn').innerHTML = '<i class="ti ti-player-pause"></i> Pause';
   $('progressWrap').style.display = '';
-  $('resultsSection').style.display = '';
-  $('exportBtn').style.display = 'none';
-  $('clearBtn').style.display = 'none';
+  if (typeof resultsVisible !== 'undefined') {
+    resultsVisible = false;
+    $('resultsSection').style.display = 'none';
+    $('showCsvBtn').innerHTML = '<i class="ti ti-table"></i> Show CSV';
+  }
+  $('clearBtn').style.display = results.length ? '' : 'none';
   setProgress(mode === 'crawl' ? 20 : 0);
 
   try {
@@ -80,18 +83,22 @@ async function processAll() {
           src: image.src
         });
         results.push({ title: image.title, src: image.src, alt });
-        addResultRow(image.title, image.src, alt);
       } catch (err) {
         skipped++;
         const msg = cleanErrorMessage(err);
         results.push({ title: image.title, src: image.src, alt: `ERROR: ${msg}` });
-        addResultRow(image.title, image.src, msg, true);
+        if (typeof saveResultsBackup === 'function') {
+          saveResultsBackup(`failed-after-${MAX_GENERATION_ATTEMPTS}-attempts`);
+        }
       }
 
       const startPct = mode === 'crawl' ? 20 : 0;
       const rangePct = mode === 'crawl' ? 80 : 100;
       setProgress(startPct + ((i + 1) / images.length) * rangePct);
-      $('resultsCount').textContent = `${results.length} row${results.length === 1 ? '' : 's'}`;
+      if (typeof updateResultsMeta === 'function') updateResultsMeta();
+      if (typeof resultsVisible !== 'undefined' && resultsVisible && typeof renderResultsTable === 'function') {
+        renderResultsTable();
+      }
       updateWorkload(i + 1, results.length - skipped, skipped);
     }
 
@@ -101,8 +108,8 @@ async function processAll() {
     paused = false;
     $('runBtn').disabled = false;
     $('pauseBtn').style.display = 'none';
-    $('exportBtn').style.display = results.length ? '' : 'none';
     $('clearBtn').style.display = results.length ? '' : 'none';
+    if (typeof updateResultsMeta === 'function') updateResultsMeta();
     stopWorkload();
   }
 }
